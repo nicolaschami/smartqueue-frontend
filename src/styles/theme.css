@@ -1,0 +1,261 @@
+/* ==========================================================
+   SmartQueue — shared design tokens & components
+   Import this file in Login.tsx, CreateBusiness.tsx, QueueBoard.tsx
+   ========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
+:root {
+  --ink: #16201d;
+  --ink-soft: #5b6b64;
+  --paper: #f1f4ef;
+  --surface: #ffffff;
+  --line: #dbe2dd;
+  --line-strong: #c5d0c9;
+  --amber: #e8a33d;
+  --amber-dark: #c9821f;
+  --green: #2f9e5b;
+  --green-soft: #e6f5ec;
+  --red: #d64545;
+  --red-soft: #fbe9e9;
+  --panel-dark: #14201c;
+  --panel-dark-line: #263731;
+  --font-ui: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--paper); }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+}
+
+button,
+input { font-family: inherit; }
+
+.sq-page,
+.sq-page * { box-sizing: border-box; }
+
+.sq-page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 85% 4%, rgba(232, 163, 61, .12), transparent 26rem),
+    radial-gradient(circle at 0% 100%, rgba(67, 105, 81, .08), transparent 22rem),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Logo mark: a ticket stub with a torn edge ---------- */
+.sq-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sq-mark-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.sq-mark-word {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* Login icon alignment for the inline SVG controls. */
+.sq-field > span[style*="position: relative"] > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 19px;
+  height: 19px;
+  transform: translateY(-50%);
+  color: #809087;
+  pointer-events: none;
+}
+
+/* ---------- Buttons ---------- */
+.sq-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  font: 700 14px/1 var(--font-ui);
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+}
+
+.sq-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.sq-btn:active:not(:disabled) { transform: translateY(1px); }
+.sq-btn:focus-visible,
+.sq-btn-quiet:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(232, 163, 61, .5);
+  outline-offset: 3px;
+}
+
+.sq-btn-primary {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(22, 32, 29, .18);
+}
+
+.sq-btn-primary:hover:not(:disabled) {
+  background: #0f1815;
+  box-shadow: 0 11px 24px rgba(22, 32, 29, .24);
+}
+
+.sq-btn-primary:disabled {
+  opacity: .56;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sq-btn-quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
+.sq-btn-quiet:hover:not(:disabled) {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+
+.sq-btn-amber {
+  background: var(--amber);
+  color: #1f1506;
+  box-shadow: 0 8px 20px rgba(201, 130, 31, .28);
+}
+
+.sq-btn-amber:hover:not(:disabled) { background: var(--amber-dark); }
+.sq-btn-full { width: 100%; }
+
+/* ---------- Form fields ---------- */
+.sq-field { display: flex; flex-direction: column; gap: 7px; }
+
+.sq-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--ink-soft);
+}
+
+.sq-input,
+.sq-select {
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 13px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 14px/1 var(--font-ui);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.sq-input:hover,
+.sq-select:hover { border-color: var(--line-strong); }
+.sq-input::placeholder { color: #9aa7a1; }
+
+.sq-input:focus,
+.sq-select:focus {
+  outline: none;
+  border-color: var(--ink);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(22, 32, 29, .08);
+}
+
+.sq-hint { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+.sq-error { font-size: 12.5px; color: var(--red); font-weight: 600; line-height: 1.45; }
+
+/* ---------- Card surface ---------- */
+.sq-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 20px 44px rgba(22, 32, 29, .07);
+}
+
+/* ---------- Ticket display panel (the one bold element) ---------- */
+.sq-display {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(160deg, var(--panel-dark) 0%, #0d1512 100%);
+  border: 1px solid var(--panel-dark-line);
+  padding: 26px 28px 22px;
+  color: #d9e6df;
+}
+
+.sq-display-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8ba69a;
+  margin: 0 0 10px;
+}
+
+.sq-display-number {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(48px, 8vw, 68px);
+  line-height: 1;
+  letter-spacing: .02em;
+  color: var(--amber);
+  text-shadow: 0 0 22px rgba(232, 163, 61, .45);
+  display: inline-block;
+}
+
+.sq-display-number.sq-flip { animation: sq-flip .32s ease; }
+
+@keyframes sq-flip {
+  0% { transform: rotateX(0deg); opacity: 1; }
+  45% { transform: rotateX(90deg); opacity: .2; }
+  55% { transform: rotateX(-90deg); opacity: .2; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+.sq-display-sub { margin-top: 6px; font-size: 13px; color: #7c9186; }
+
+@media (max-width: 700px) {
+  .sq-page { padding: 16px !important; }
+  .sq-page > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; border-radius: 18px !important; }
+  .sq-page aside { min-height: auto !important; padding: 28px !important; }
+  .sq-page aside > div:nth-child(1) > div:nth-child(2) { margin-top: 35px !important; }
+  .sq-page aside h2 { font-size: 27px !important; }
+  .sq-page aside > div:last-child { margin-top: 30px; }
+  .sq-page section { padding: 34px 28px !important; }
+}
+
+@media (max-width: 420px) {
+  .sq-page section { padding: 30px 20px !important; }
+  .sq-page section h1 { font-size: 26px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* Queue dashboard responsive layout */
+@media (max-width: 760px) {
+  .sq-board-grid { grid-template-columns: 1fr !important; }
+}
