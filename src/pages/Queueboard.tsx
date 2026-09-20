@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, type FC } from 'react';
+import {  useState, useEffect, type FC } from 'react';
 import { useParams } from 'react-router-dom';
 import '../styles/theme.css';
 import { API_BASE_URL } from '../api';

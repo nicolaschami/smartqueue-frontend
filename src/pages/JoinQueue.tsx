@@ -9,7 +9,7 @@ import { useEffect, useState, type FC } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import '../styles/theme.css';
 import { supabase } from '../lib/supabase';
-
+import { API_BASE_URL } from '../api';
 interface JoinQueueProps {
   queueId?: string;
   apiBaseUrl?: string;
