@@ -1,15 +1,10 @@
-//Public Key:
-//BGcjGydhUgReai9zg7QnWfShdsJ4stY6FA5q211KOEneL5Cks6kF6MpXkzTrOyUJK7IHaTrURigRQ4QGQC1JrQI
-
-//Private Key:
-//cSx4f7tOQu1V94QtVuHu8ActiVvZfx-rdLyPZZUTNoI
-
-//=======================================
 import { useEffect, useState, type FC } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import '../styles/theme.css';
 import { supabase } from '../lib/supabase';
 import { API_BASE_URL } from '../api';
+
+
 interface JoinQueueProps {
   queueId?: string;
   apiBaseUrl?: string;
