@@ -3,7 +3,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import '../styles/theme.css';
 import { supabase } from '../lib/supabase';
 import { API_BASE_URL } from '../api';
-
+import AddToHomeScreenPrompt, {
+  useIosInstallStatus,
+} from './AddToHomeScreenPrompt'; // adjust path if your file lives elsewhere
 
 interface JoinQueueProps {
   queueId?: string;
@@ -59,10 +61,14 @@ const BellIcon = () => (
   </svg>
 );
 
+// Key used to carry the ticket across the Safari-tab -> installed-app jump.
+// iOS opens the Home Screen icon as a brand new, separate standalone window,
+// so React state (and the ticket in it) does not survive that jump on its own.
+const PENDING_TICKET_KEY = 'sq_pending_ticket';
+
 export const JoinQueue: FC<JoinQueueProps> = ({
   queueId = 'edb5b42d-34dd-47a5-82d9-551efab650d4',
-  //apiBaseUrl = 'http://localhost:3000',
-  apiBaseUrl = `${API_BASE_URL}/api`, // Uses your dynamic base URL
+  apiBaseUrl = `${API_BASE_URL}/`,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,11 +81,49 @@ export const JoinQueue: FC<JoinQueueProps> = ({
   const [notificationStatus, setNotificationStatus] =
     useState<NotificationPermission | null>(null);
 
-  const endpointUrl = `${apiBaseUrl}/api/queues/${queueId}/entries`;
+  // Add to Home Screen prompt state
+  const [showAddToHomeScreen, setShowAddToHomeScreen] = useState(false);
+  const { shouldPrompt: needsHomeScreenInstall, isStandalone } =
+    useIosInstallStatus();
+
+  // Used by fetch() to actually create the ticket — never put this in the QR.
+  const endpointUrl = `${apiBaseUrl}api/queues/${queueId}/entries`;
+
+  // Used by the QR code. Keep the API endpoint above separate: scanning the
+  // QR should open the display queue page, not create a ticket directly.
+  const pageUrl = new URL('/DisplayQueue', window.location.origin).toString();
 
   // Constant values sent automatically
   const DEFAULT_CUSTOMER_NAME = 'Walk-in Guest';
   const DEFAULT_CUSTOMER_PHONE = 'N/A';
+
+  /*
+   * ============================================================
+   * RESTORE A PENDING TICKET AFTER INSTALL
+   * ============================================================
+   *
+   * If the customer just relaunched SmartQueue from the Home Screen
+   * (now running standalone) and there's a ticket we stashed before
+   * sending them to "Add to Home Screen", pick it back up and go
+   * straight to the notification prompt — this is the point of the
+   * whole detour.
+   */
+  useEffect(() => {
+    if (!isStandalone) return;
+
+    const stored = localStorage.getItem(PENDING_TICKET_KEY);
+    if (!stored) return;
+
+    try {
+      const restored: JoinedTicket = JSON.parse(stored);
+      setTicket(restored);
+      setShowNotificationPrompt(true);
+    } catch (err) {
+      console.error('Failed to restore pending ticket:', err);
+    } finally {
+      localStorage.removeItem(PENDING_TICKET_KEY);
+    }
+  }, [isStandalone]);
 
   /*
    * ============================================================
@@ -173,8 +217,16 @@ export const JoinQueue: FC<JoinQueueProps> = ({
       // Ticket successfully created
       setTicket(data);
 
-      // Show notification prompt after ticket is generated
-      setShowNotificationPrompt(true);
+      // iOS Safari, not installed yet: Notification.requestPermission()
+      // and pushManager.subscribe() won't produce a working subscription
+      // until this is running as an installed Home Screen app. Send them
+      // there first instead of straight to "Enable Notifications".
+      if (needsHomeScreenInstall) {
+        localStorage.setItem(PENDING_TICKET_KEY, JSON.stringify(data));
+        setShowAddToHomeScreen(true);
+      } else {
+        setShowNotificationPrompt(true);
+      }
     } catch (err: any) {
       setError(
         err.message || 'Something went wrong.'
@@ -186,20 +238,30 @@ export const JoinQueue: FC<JoinQueueProps> = ({
 
   /**
    * Start over and get another ticket.
-   * (Declared above handleEnableNotifications so it can be
-   * referenced there without worrying about ordering — it's
-   * a `const` function, but since it's only ever called from
-   * inside event handlers invoked later, this works fine.)
    */
   const handleGetAnotherTicket = () => {
     setTicket(null);
     setShowNotificationPrompt(false);
+    setShowAddToHomeScreen(false);
     setNotificationStatus(null);
     setError(null);
+    localStorage.removeItem(PENDING_TICKET_KEY);
   };
 
   /**
-   * Ask the browser for notification permission.
+   * Customer tapped "I've added it" in the Add to Home Screen sheet.
+   * They're still in the regular Safari tab at this point, not the
+   * installed app, so we can't subscribe to push yet — the ticket is
+   * already stashed in localStorage, and the useEffect above picks it
+   * back up once they relaunch from the Home Screen icon.
+   */
+  const handleAddToHomeScreenConfirm = () => {
+    setShowAddToHomeScreen(false);
+  };
+
+  /**
+   * Ask the browser for notification permission
+   * and create the push subscription.
    */
   const handleEnableNotifications = async () => {
     // Browser does not support notifications
@@ -215,83 +277,178 @@ export const JoinQueue: FC<JoinQueueProps> = ({
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      /*
+       * --------------------------------------------------------
+       * STEP 1: Ask for notification permission
+       * --------------------------------------------------------
+       */
+      const permission =
+        await Notification.requestPermission();
+
+      console.log(
+        '🔔 Notification permission:',
+        permission
+      );
+
+      /*
+       * Do not attempt PushManager.subscribe()
+       * unless permission was granted.
+       */
+      if (permission !== 'granted') {
+        setNotificationStatus(permission);
+        setShowNotificationPrompt(false);
+        return;
+      }
+
+      /*
+       * --------------------------------------------------------
+       * STEP 2: Register the Service Worker
+       * --------------------------------------------------------
+       */
       const registration =
-      await navigator.serviceWorker.register('/sw.js');
-      console.log('🟢 Service Worker registered:', registration);
-      const vapidPublicKey =   import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        await navigator.serviceWorker.register('/sw.js');
 
-const subscription =
-  await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: vapidPublicKey,
-  });
+      console.log(
+        '🟢 Service Worker registered:',
+        registration
+      );
 
-console.log('🟢 Push subscription:', subscription);
+      /*
+       * --------------------------------------------------------
+       * STEP 3: Wait until the Service Worker is ACTIVE
+       * --------------------------------------------------------
+       *
+       * This is the important fix for:
+       *
+       * "Subscription failed - no active Service Worker"
+       */
+      const activeRegistration =
+        await navigator.serviceWorker.ready;
 
+      console.log(
+        '🟢 Active Service Worker:',
+        activeRegistration
+      );
 
+      /*
+       * --------------------------------------------------------
+       * STEP 4: Check VAPID public key
+       * --------------------------------------------------------
+       */
+      const vapidPublicKey =
+        import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
-      //
+      if (!vapidPublicKey) {
+        throw new Error(
+          'VITE_VAPID_PUBLIC_KEY is not configured.'
+        );
+      }
 
+      /*
+       * --------------------------------------------------------
+       * STEP 5: Create Push subscription
+       * --------------------------------------------------------
+       */
+      const subscription =
+        await activeRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidPublicKey,
+        });
 
+      console.log('🟢 Push subscription:', subscription);
+      alert('✅ Push subscription created');
 
-      console.log('🟢 Service Worker registered:', registration);
       setNotificationStatus(permission);
 
-      if (permission === 'granted') {
-  if (!ticket?.entry.id) {
-    throw new Error('No queue ticket found.');
-  }
-
- const response = await fetch('http://localhost:3000/api/notifications/subscribe', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-  queueEntryId: ticket.entry.id,
-  permission: 'granted',
-  subscription: subscription.toJSON(),
-}),
-});
-
- const data = await response.text();
-
-console.log('🔵 Notification API status:', response.status);
-console.log('🔵 Notification API response:', data);
-
-  if (!response.ok) {
-  throw new Error(
-    `Notification API failed (${response.status}): ${data}`
-  );
-}
-
-const result = JSON.parse(data);
-
-console.log('🟢 Notification API success  :: --->', result);
-
-if ('Notification' in window && Notification.permission === 'granted') {
-  const notification = new Notification('Welcome to the queue! 🔔', {
-    body: 'You have joined the queue successfully. We’ll keep you updated about your turn.',
-  });
-
-  console.log('Browser notification created:', notification);
-} else {
-  console.log('Notifications are not granted.');
-}
-
-  // Go straight back to the Join Queue view instead of
-  // showing the "Notifications enabled" state on the ticket.
-  handleGetAnotherTicket();
-}
-
-      if (permission === 'denied') {
-        setShowNotificationPrompt(false);
+      /*
+       * --------------------------------------------------------
+       * STEP 6: Make sure we have a queue ticket
+       * --------------------------------------------------------
+       */
+      if (!ticket?.entry.id) {
+        throw new Error('No queue ticket found.');
       }
 
-      if (permission === 'default') {
-        setShowNotificationPrompt(false);
+      /*
+       * --------------------------------------------------------
+       * STEP 7: Send subscription to Render backend
+       * --------------------------------------------------------
+       */
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/subscribe`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            queueEntryId: ticket.entry.id,
+            permission: 'granted',
+            subscription: subscription.toJSON(),
+          }),
+        }
+      );
+
+      const data = await response.text();
+
+      console.log(
+        '🔵 Notification API status:',
+        response.status
+      );
+
+      console.log(
+        '🔵 Notification API response:',
+        data
+      );
+
+
+
+
+      if (!response.ok) {
+        throw new Error(
+          `Notification API failed (${response.status}): ${data}`
+        );
       }
+
+      const result = JSON.parse(data);
+
+      console.log(
+        '🟢 Notification API success :: --->',
+        result
+      );
+
+      /*
+       * --------------------------------------------------------
+       * STEP 8: Test browser notification
+       * --------------------------------------------------------
+       */
+      if (
+        'Notification' in window &&
+        Notification.permission === 'granted'
+      ) {
+        const notification = new Notification(
+          'Welcome to the queue! 🔔',
+          {
+            body:
+              'You have joined the queue successfully. We’ll keep you updated about your turn.',
+          }
+        );
+
+        console.log(
+          'Browser notification created:',
+          notification
+        );
+      } else {
+        console.log(
+          'Notifications are not granted.'
+        );
+      }
+
+      /*
+       * Go back to the Join Queue view.
+       */
+      handleGetAnotherTicket();
+
     } catch (err) {
       console.error(
         'Notification permission error:',
@@ -408,6 +565,13 @@ if ('Notification' in window && Notification.permission === 'granted') {
                   : `${ticket.position - 1} people ahead of you`}
               </p>
             </div>
+
+            {/* ADD TO HOME SCREEN PROMPT (iOS Safari, not installed yet) */}
+            <AddToHomeScreenPrompt
+              open={showAddToHomeScreen}
+              onClose={() => setShowAddToHomeScreen(false)}
+              onConfirm={handleAddToHomeScreenConfirm}
+            />
 
             {/* NOTIFICATION PROMPT */}
 
@@ -544,7 +708,7 @@ if ('Notification' in window && Notification.permission === 'granted') {
               }}
             >
               <QRCodeSVG
-                value={endpointUrl}
+                value={pageUrl}
                 size={180}
                 level="M"
                 includeMargin={true}

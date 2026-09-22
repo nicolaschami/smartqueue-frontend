@@ -130,7 +130,8 @@ const QueueBoard: FC = () => {
     setIsFlipping(true);
     try {
       //await fetch(`http://localhost:3000/api/queues/${queueId}/call-next`, { method: 'POST', });
-       await fetch(`${API_BASE_URL}/api/queues/${queueId}/call-next`);
+      // await fetch(`${API_BASE_URL}/api/queues/${queueId}/call-next`);
+      await fetch(`${API_BASE_URL}/api/queues/${queueId}/call-next`, {  method: 'POST',  });
       await fetchDashboardData(); // Refresh UI
     } catch (err) {
       console.error('Failed to call next:', err);

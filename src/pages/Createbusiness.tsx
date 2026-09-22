@@ -251,6 +251,7 @@ const CreateBusiness: FC<CreateBusinessProps> = ({
     setIsLoadingList(true);
     setListError('');
     try {
+      console.log('Fetching businesses from endpoint:', `${apiBaseUrl}/businesses`);
       const response = await fetch(`${apiBaseUrl}/businesses`);
       if (!response.ok) throw new Error('Failed to fetch businesses');
       const data: Business[] = await response.json();
@@ -417,12 +418,12 @@ const CreateBusiness: FC<CreateBusinessProps> = ({
   const handleDownloadQueueQr = async (business: Business, queue: Queue) => {
     setQrDownloadError('');
     setDownloadingQueueId(queue.id);
-    try {
-      const qrDataUrl = await QRCode.toDataURL('http://localhost:3000/api/businesses/'+ queue.id+'/queues', {
-        width: 320,
-        margin: 1,
-        color: { dark: '#16201d', light: '#ffffff' },
-      });
+  try {
+  const qrDataUrl = await QRCode.toDataURL(`${API_BASE_URL}/api/businesses/${queue.id}/queues`, {
+    width: 320,
+    margin: 1,
+    color: { dark: '#16201d', light: '#ffffff' },
+  });
 
       const qrImage = new Image();
       qrImage.src = qrDataUrl;

@@ -71,18 +71,6 @@ input { font-family: inherit; }
   color: var(--ink);
 }
 
-/* Login icon alignment for the inline SVG controls. */
-.sq-field > span[style*="position: relative"] > svg {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  width: 19px;
-  height: 19px;
-  transform: translateY(-50%);
-  color: #809087;
-  pointer-events: none;
-}
-
 /* ---------- Buttons ---------- */
 .sq-btn {
   display: inline-flex;
@@ -258,4 +246,599 @@ input:focus-visible {
 /* Queue dashboard responsive layout */
 @media (max-width: 760px) {
   .sq-board-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ==========================================================
+   Login — torn-ticket layout
+   ========================================================== */
+
+.sq-login-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(232, 163, 61, .14), transparent 24rem),
+    radial-gradient(circle at 2% 96%, rgba(47, 158, 91, .10), transparent 22rem),
+    var(--paper);
+}
+
+.sq-login-card {
+  width: 100%;
+  max-width: 940px;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, .92fr) minmax(340px, 1fr);
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 26px 70px rgba(22, 32, 29, .16);
+}
+
+/* left: the ticket-board panel, torn along its right edge */
+.sq-login-aside {
+  position: relative;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(232, 163, 61, .10), transparent 55%),
+    linear-gradient(165deg, var(--panel-dark) 0%, #0c1310 100%);
+  color: #eef3ef;
+  padding: 44px 40px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 30px;
+  min-height: 520px;
+  clip-path: polygon(
+    0% 0%, 100% 0%,
+    calc(100% - 9px) 10%, 100% 20%,
+    calc(100% - 9px) 30%, 100% 40%,
+    calc(100% - 9px) 50%, 100% 60%,
+    calc(100% - 9px) 70%, 100% 80%,
+    calc(100% - 9px) 90%, 100% 100%,
+    0% 100%
+  );
+}
+
+.sq-login-aside::before {
+  /* faint dot texture, like thermal ticket paper */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px);
+  background-size: 14px 14px;
+  pointer-events: none;
+  opacity: .5;
+}
+
+.sq-login-brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  font-size: 18px;
+  color: #f9f7ef;
+}
+
+/* the "now serving" board — the one bold, animated element */
+.sq-hero-board {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .03);
+  border-radius: 14px;
+  padding: 20px 22px 18px;
+}
+
+.sq-hero-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8a33d;
+}
+
+.sq-hero-number {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(40px, 6vw, 52px);
+  line-height: 1;
+  color: var(--amber);
+  text-shadow: 0 0 20px rgba(232, 163, 61, .4);
+  display: inline-block;
+}
+
+.sq-hero-number.sq-flip { animation: sq-flip .32s ease; }
+
+.sq-hero-tear {
+  margin: 16px 0 12px;
+  height: 1px;
+  border-top: 1px dashed rgba(255, 255, 255, .16);
+  position: relative;
+}
+
+.sq-hero-tear::before,
+.sq-hero-tear::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0c1310;
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+
+.sq-hero-tear::before { left: -30px; }
+.sq-hero-tear::after { right: -30px; }
+
+.sq-hero-next {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sq-hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+  color: rgba(238, 243, 239, .62);
+}
+
+.sq-hero-row-code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: rgba(238, 243, 239, .82);
+  margin-right: 8px;
+}
+
+.sq-login-copy { position: relative; max-width: 290px; }
+
+.sq-login-copy h2 {
+  margin: 0 0 12px;
+  font-size: 30px;
+  line-height: 1.12;
+  letter-spacing: -.04em;
+  font-weight: 800;
+  color: #f9f7ef;
+}
+
+.sq-login-copy p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(238, 243, 239, .64);
+}
+
+.sq-login-status {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: rgba(238, 243, 239, .5);
+}
+
+.sq-login-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7fc790;
+  box-shadow: 0 0 0 5px rgba(127, 199, 144, .14);
+}
+
+/* right: the sign-in form */
+.sq-login-form-section {
+  padding: 46px clamp(28px, 6vw, 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sq-login-heading {
+  margin: 0 0 8px;
+  font-size: 29px;
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  color: var(--ink);
+}
+
+.sq-login-subheading {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.sq-field-icon-wrap {
+  position: relative;
+  display: block;
+}
+
+.sq-field-icon-wrap svg:first-child {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: #7f9187;
+  pointer-events: none;
+}
+
+.sq-field-input {
+  width: 100%;
+  padding-left: 42px;
+  box-sizing: border-box;
+}
+
+.sq-field-input--pw { padding-right: 46px; }
+
+.sq-eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  padding: 7px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.sq-eye-btn:hover { color: var(--ink); background: rgba(22, 32, 29, .05); }
+
+.sq-login-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: -2px;
+}
+
+.sq-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.sq-remember input {
+  accent-color: var(--ink);
+  width: 15px;
+  height: 15px;
+}
+
+.sq-link-quiet {
+  border: 0;
+  background: none;
+  font: 600 12.5px var(--font-ui);
+  cursor: pointer;
+  padding: 0;
+  color: var(--amber-dark);
+}
+
+.sq-login-footer {
+  margin: 26px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.sq-login-footer button {
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .sq-login-shell { padding: 16px; }
+
+  .sq-login-card {
+    grid-template-columns: 1fr;
+    border-radius: 18px;
+  }
+
+  .sq-login-aside {
+    min-height: auto;
+    padding: 30px 28px 40px;
+    gap: 24px;
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 100%,
+      90% calc(100% - 9px), 80% 100%,
+      70% calc(100% - 9px), 60% 100%,
+      50% calc(100% - 9px), 40% 100%,
+      30% calc(100% - 9px), 20% 100%,
+      10% calc(100% - 9px), 0% 100%
+    );
+  }
+
+  .sq-login-copy { max-width: none; }
+  .sq-login-copy h2 { font-size: 26px; }
+  .sq-login-form-section { padding: 34px 26px; }
+}
+
+@media (max-width: 420px) {
+  .sq-login-form-section { padding: 30px 20px; }
+  .sq-login-heading { font-size: 25px; }
+}
+
+/* ==========================================================
+   ClientInfo — business header + queue cards
+   ========================================================== */
+
+.sq-info-shell { background: var(--paper); }
+
+.sq-info-header {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(232, 163, 61, .12), transparent 50%),
+    linear-gradient(165deg, var(--panel-dark) 0%, #0c1310 100%);
+  color: #eef3ef;
+  padding: 40px clamp(20px, 5vw, 56px) 46px;
+}
+
+.sq-info-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px);
+  background-size: 14px 14px;
+  opacity: .45;
+  pointer-events: none;
+}
+
+.sq-info-header-inner {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 28px;
+}
+
+.sq-info-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  font-size: 17px;
+  color: #f9f7ef;
+}
+
+.sq-info-name {
+  margin: 16px 0 4px;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  color: #f9f7ef;
+}
+
+.sq-info-slug {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: rgba(238, 243, 239, .48);
+}
+
+.sq-info-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 22px;
+  margin-top: 18px;
+}
+
+.sq-info-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: rgba(238, 243, 239, .68);
+}
+
+.sq-info-meta-item svg {
+  width: 15px;
+  height: 15px;
+  color: rgba(238, 243, 239, .42);
+  flex-shrink: 0;
+}
+
+.sq-info-stats {
+  position: relative;
+  display: flex;
+  gap: 12px;
+}
+
+.sq-info-stat {
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 12px;
+  padding: 11px 20px;
+  text-align: center;
+  min-width: 82px;
+}
+
+.sq-info-stat-num {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--amber);
+}
+
+.sq-info-stat-label {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: rgba(238, 243, 239, .5);
+}
+
+.sq-info-content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 38px clamp(20px, 5vw, 56px) 64px;
+}
+
+.sq-info-section-title {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.sq-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 20px;
+}
+
+.sq-queue-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 26px rgba(22, 32, 29, .05);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.sq-queue-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(22, 32, 29, .09);
+}
+
+.sq-queue-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sq-queue-name {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--ink);
+}
+
+.sq-queue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sq-queue-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sq-queue-badge--open { background: var(--green-soft); color: var(--green); }
+.sq-queue-badge--closed { background: var(--red-soft); color: var(--red); }
+.sq-queue-badge--paused { background: #fdf1de; color: var(--amber-dark); }
+
+.sq-queue-ticket {
+  background: linear-gradient(160deg, var(--panel-dark) 0%, #0d1512 100%);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.sq-queue-ticket-label {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  color: #8ba69a;
+}
+
+.sq-queue-ticket-number {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--amber);
+  text-shadow: 0 0 16px rgba(232, 163, 61, .4);
+}
+
+.sq-queue-service {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.sq-queue-service svg {
+  width: 14px;
+  height: 14px;
+  color: #9aa7a1;
+}
+
+.sq-queue-qr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sq-queue-qr-hint {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+.sq-queue-closed-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.sq-queue-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.sq-queue-actions .sq-btn {
+  flex: 1;
+  min-height: 40px;
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+@media (max-width: 620px) {
+  .sq-info-header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sq-info-stats { width: 100%; }
+  .sq-info-stat { flex: 1; }
 }
